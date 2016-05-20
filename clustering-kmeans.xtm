@@ -1,0 +1,138 @@
+(sys:load "csv.xtm")
+(sys:load "libs/core/adt.xtm")
+(sys:load "libs/core/math_ext.xtm")
+
+(bind-alias Centroids double*)
+(bind-alias Clusters i64*)
+(bind-type BothCC <Clusters,Centroids>)
+
+;; This must exist already
+(bind-func square:[!a,!a]*
+  (lambda (x)
+    (* x x)
+    ))
+
+(bind-func vector_distance
+  (lambda (v1 v1off v2 v2off d)
+    (let ((r:double 0.0)
+          (i:i64 0))
+      ;(printf "d: %i" d)
+      (dotimes (i d)
+        ;(printf " (%f - %f )^2 " (pref v1 (+ v1off i)) (pref v2 (+ v2off i)) )
+        (set! r (+ r (square (- (pref v1 (+ v1off i)) (pref v2 (+ v2off i)) ))))
+        )
+        ;(println "")
+        ;(printf "%f\n" r)
+      r
+)))
+
+
+(bind-func closest_centroid
+  (lambda (v:double* voff:i64 centroids:double* centroid_count:i64 d:i64)
+      ;; TODO: fix infinity/null
+      (let ((min_distance:double 10000000.0)
+            (min_centroid_id:i64 0)
+            (i:i64 0))
+        (dotimes (i centroid_count)
+          (let ((now_distance:double (vector_distance v voff centroids (* i d) d))
+                )
+            (if (< now_distance min_distance)
+              (let ((a 1))
+                (set! min_distance now_distance)
+                (set! min_centroid_id i)))))
+        min_centroid_id
+        )))
+
+(bind-func scalar_mult
+  (lambda (s:double v:double* voff:i64 l:i64)
+    (let ((d:double* (alloc l))
+          (i:i64 0))
+      (dotimes (i l)
+        (pset! d i (* s (pref v (+ voff i)))))
+      d
+    )))
+
+(bind-func new_centroids:[Centroids,Centroids,Clusters,Data*,i64]*
+  (lambda (sum clusters data k)
+    (let ((count:i64* (alloc k))
+          (i:i64 0)
+          (j:i64 0)
+          (z:i64 0)
+          (vecs (tref data 0))
+          (n:i64 (tref data 1))
+          (d:i64 (tref data 3)))
+      (dotimes (i k)
+        (dotimes (j d)
+          (pset! sum (+ (* i d) j) 0.0))
+        (pset! count i 0)
+      )
+      (set! i 0)
+      ;; loop through vectors
+      (dotimes (i n)
+        (let (;(v (nth vectors i))
+              (cluster (pref clusters i))
+              (c_count (pref count cluster))
+              (c_sum (pref sum cluster)))
+          (pset! count cluster (+ 1 c_count))
+          ;(printf "going in %i\n" cluster)
+          ;; loop through dimensions
+          (dotimes (z d)
+              (pset! sum (+ (* cluster d) z) (+ (pref sum (+ (* cluster d) z)) (pref vecs (+ (* i d) z))))
+            )
+      ))
+      ; I don't think this is needed:
+      (set! i 0)
+      (set! j 0)
+      (dotimes (i k)
+        (dotimes (j d)
+          ;(printf ": sum: %f, count: %i,  %f\n" (pref sum (+ (* d i) j)) (pref count i) (/ (pref sum (+ (* d i) j)) (convert (pref count i)) ))
+          (pset! sum (+ (* d i) j) (/ (pref sum (+ (* d i) j)) (convert (pref count i)) ))
+        )
+      )
+    sum)
+    ))
+
+(bind-func cluster-kmeans:[BothCC*,Data*,i64]*
+  (lambda (data k)
+    (let ((vectors (tuple-ref data 0))
+          (n (tuple-ref data 1))
+          (axes (tuple-ref data 2))
+          (d (tuple-ref data 3))
+          (clusters:Clusters (halloc n))
+          (centroids:Centroids (halloc (* d k)))
+          (i:i64 0)
+          (j:i64 0)
+          (both:BothCC* (BothCC clusters centroids)))
+      ;; Pick k random centroids
+      ;(println "\nClustering...")
+      ;(printf "0\n")
+      (dotimes (i k)
+        (let (;(r:float (random))
+              ;(index:i64 (convert (* (convert n) r)))
+              (index:i64 (convert (+ 1 (* i (/ n (+ 1 k))))))
+              )
+          ;(printf "Randomly picked %i with sample: %f\n" index (pref vectors (* d index)))
+          (dotimes (j d)
+            (pset! centroids (+ (* d i) j) (pref vectors (+ (* d index) j)))
+            ;(printf "%i: %f\n" (+ (* d i) j) (pref centroids (+ (* d i) j)))
+            )
+          ;;(set! centroids (add_to_end centroids (nth vectors index)))
+        ))
+      ; I don't think this is needed:
+      (set! i 0)
+      (set! j 0)
+      (dotimes (j 200)
+        ;(printf "\nn: %i\n\n" n)
+        (dotimes (i n)
+          ;(printf "taste: %f\n" (pref vectors (* i d)))
+          (pset! clusters i (closest_centroid vectors (* i d) centroids k d))
+          ;(printf "i've gone into %i\n" (pref clusters i))
+          )
+        (set! centroids (new_centroids centroids clusters data k))
+      )
+      ;(printf "1\n")
+      (BothCC_h clusters centroids)
+    )))
+
+
+;($ (nvg_draw_tick2))
