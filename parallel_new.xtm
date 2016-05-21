@@ -52,88 +52,117 @@
 (bind-val current_line float*)
 
 
-(bind-val data Data* (load_csv "cars.csv"))
+(bind-val data Data* (load_csv "basic.csv"))
 
 
 (bind-func draw_parallel_coordinate
-  (lambda (bounds:Rect*)
-    ;(println "1.1-in")
-    (let (;(l2 (log "1.15-in"))
-          (vectors (tuple-ref data 0))
-          (n (tuple-ref data 1))
-          (axes (tuple-ref data 2))
-          (d (tuple-ref data 3))
-          ;(l (log "1.2-in"))
-          ;(l3 (log "1.2-out"))
-          (i:i64 0)
-          (j:i64 0)
-          (k:i64 0)
-          (colour1 (NVGcolor .6 .1 .7 0.4))
-          (colour2 (NVGcolor .1 .7 .6 0.4))
-          (colour3 (NVGcolor .7 .6 .1 0.4))
-          (colours (list colour1 colour2 colour3))
-          (both:BothCC* (cluster-kmeans data 3))
-          (clusters:Clusters (tuple-ref both 0))
-          ;(centroids:Centroids (tuple-ref both 1))
-         )
-      ;(println "2-in")
-      ;(printf "n: %i, d: %i\n" n d)
-      (dotimes (i n)
-        ;(set! centroid (nth centroids (nth clusters i)))
-        (dotimes (j d)
-          (let ((axis (pref axes j))
-                (offset:float (tuple-ref axis 1))
-                (range (tuple-ref axis 3))
-                (min (tuple-ref range 0))
-                (max (tuple-ref range 1))
-                ;;(difference (- max min))
-                (current (pref vectors (+ j (* i d))))
-                (normalized (+ 0.05 (* 0.9 (/ (- current min) (- max min))))))
-              ;;(printf "%f\n" current)
-              (pset! current_line (* j 2) (convert (offset)) )
-              (pset! current_line (+ (* j 2) 1) (convert normalized) )
-              ))
-        (dv_draw_line vg bounds current_line d (nth colours (pref clusters i)))
-        #t
+  (let (
+        (i:i64 0)
+        (j:i64 0)
+        (k:i64 0)
+        (colour1 (NVGcolor .6 .1 .7 0.4))
+        (colour2 (NVGcolor .1 .7 .6 0.4))
+        (colour3 (NVGcolor .7 .6 .1 0.4))
+        (colour4 (NVGcolor .1 .6 .7 0.4))
+        (colours (list colour1 colour2 colour3 colour4))
+        (axis:Axis* null)
+        (offset:float (convert 0))
+        (offset2:float (convert 0))
+        (range:Range* null)
+        (minv:double 0.0)
+        (maxv:double 0.0)
+        (current:double 0.0)
+        (current2:double 0.0)
+        (normalized:double 0.0)
+        (spacing:double 0.0)
+        (spacingn:double 0.0)
+        (cluster:i64 0)
+        (crange:Range* null)
+        (minr:double 0.0)
+        (maxr:double 0.0)
         )
-      ;;(free current_line)
-      ;(println "2-mid")
-      (dotimes (i d)
-        ;;(dv_draw_axis_labels_2D vg bounds labs nlabs labs nlabs)
-        ;;(dv_draw_axis_2D vg bounds (tuple-ref (nth axes i) 1))
-        (dv_draw_axis_2D vg bounds (tuple-ref (pref axes i) 1)))
-      ;(println "2-out")
-      #t
-    )))
+    (lambda (bounds:Rect*)
+      ;(println "1.1-in")
+      (let ((vectors (tuple-ref data 0))
+            (n (tuple-ref data 1))
+            (axes (tuple-ref data 2))
+            (d (tuple-ref data 3))
+            (both:BothCCR* (cluster-kmeans data 3))
+            (clusters:Clusters (tuple-ref both 0))
+            (centroids:Centroids (tuple-ref both 1))
+            (ranges:Range** (tuple-ref both 2))
+           )
+        ;(println "2-in")
+        ;(printf "n: %i, d: %i\n" n d)
+        (set! i 0)
+        (set! j 0)
+        (set! k 0)
+        (dotimes (i n)
+          ;(set! centroid (nth centroids (nth clusters i)))
+          (set! cluster (pref clusters i))
+          (dotimes (j d)
+                ;;(printf "%f\n" current)
+                ;(println "...1")
+                (set! axis (pref axes j))
+                (set! offset (tuple-ref axis 1))
+                (set! range (tuple-ref axis 3))
+                (set! minv (tuple-ref range 0))
+                (set! maxv (tuple-ref range 1))
+                (set! current (pref vectors (+ j (* i d))))
+                (set! normalized (+ 0.05 (* 0.9 (/ (- current minv) (- maxv minv)))))
+                ;(println "...2")
+                (pset! current_line (* j 4) (convert (offset)) )
+                (pset! current_line (+ (* j 4) 1) (convert normalized) )
+                ;(println "...3")
 
-(bind-func nvg_draw_tick
-  (let ((bar_rect (Rect 0. 20. (convert width) (- (convert height) 30.))))
-    (lambda ()
-      (nvg_clear)
-      (nvgBeginFrame vg width height pixel_ratio)
-      (set_bg vg)
-      (nvgResetTransform vg)
-      (draw_parallel_coordinate bar_rect )
-      ;;(draw_barplot bar_rect)
-      (nvgEndFrame vg)
-      (glfwPollEvents)
-      (glfwSwapBuffers window))))
+                (if (< j (- d 1))
+                  (let ((a #t))
+                    (set! offset2 (tuple-ref (pref axes (+ j 1)) 1))
+                    (set! current2 (pref centroids (+ j (* cluster d)) ))
+                    (set! normalized (+ 0.05 (* 0.9 (/ (- current2 minv) (- maxv minv)))))
+
+                    (set! crange (pref ranges (+ (* cluster d) j)))
+                    (set! minr (tref crange 0))
+                    (set! maxr (tref crange 1))
+                    (set! spacing (- current current2 ))
+                    (set! spacingn (* 0.1 (+ 0.05 (* 0.9 (/ (- spacing minv) (- maxv minv))))))
+                    ;(set! spacingn (* 0.0 (random)))
+                    (pset! current_line (+ (* j 4) 2) (convert (/ (+ offset offset2) (convert 2))) )
+                    (pset! current_line (+ (* j 4) 3) (convert (+ spacingn normalized)) )
+                  )
+                )
+                )
+          (dv_draw_line vg bounds current_line (- (* d 2) 1) (nth colours (pref clusters i)))
+          #t
+          )
+        ;;(free current_line)
+        ;(println "2-mid")
+        (dotimes (i d)
+          ;;(dv_draw_axis_labels_2D vg bounds labs nlabs labs nlabs)
+          ;;(dv_draw_axis_2D vg bounds (tuple-ref (nth axes i) 1))
+          (dv_draw_axis_2D vg bounds (tuple-ref (pref axes i) 1)))
+        ;(println "2-out")
+        #t
+    ))))
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 (bind-func transform_data
   (lambda (data:Data*)
     data
     ))
-
-
-
-
-
-
-
-
-
-
 
 
 (bind-func draw_barplot
@@ -185,7 +214,9 @@
       (draw_barplot bar_rect)
       (draw_scatterplot scatter_rect)
       ;(println "1-in")
+      ;(println "plotting-in")
       (draw_parallel_coordinate parallel_rect)
+      ;(println "plotting-out")
       ;(println "1-out\n")
       (nvgEndFrame vg)
       (set! data (transform_data data))
@@ -202,6 +233,7 @@
           (n:i64 (tref data 1))
           (c_l:float* (halloc (+ (* (- n 1) 2) (* 2 n))))
           )
+      (println "running loop...")
       (set! current_line c_l)
       (nvg_draw_loop1 (now) (/ 1. 30.))
       ;;(nvg_draw_loop1 (+ 2 (now)) (/ 4. 1.) data2)
@@ -210,32 +242,14 @@
 
 (run_loop)
 
-(bind-func nvg_draw_loop1
-  (lambda (time:i64 delta_t:double data:Data*)
-    void
+(bind-func setData
+  (lambda (name)
+    (set! data (load_csv name))
     ))
 
+($ (setData "cars.csv"))
 
-
-
-(bind-func nvg_draw_tick2
-  (let ((bar_rect (Rect 0. 0. (* 0.3 (convert width)) (* 0.5 (convert height))))
-        (scatter_rect (Rect 0. (* 0.5 (convert height)) (* 0.3 (convert width)) (* 0.5 (convert height))))
-        (parallel_rect (Rect (* 0.3 (convert width)) 0. (* 0.7 (convert width)) (convert height)))
-        (parity:i64 0))
-    (lambda ()
-      (nvg_clear)
-      (set! parity (+ parity 1))
-      (nvgBeginFrame vg width height pixel_ratio)
-      (nvgResetTransform vg)
-      (draw_barplot bar_rect)
-      (draw_scatterplot scatter_rect)
-      (let ((data (load_csv "cars.csv")))
-      (draw_parallel_coordinate parallel_rect data))
-      (nvgEndFrame vg)
-      ;;(set! data (transform_data data))
-      (glfwPollEvents)
-      (set_bg vg)
-      ;;(printf "\n\n\n\n\n")
-      (glfwSwapBuffers window)
-      )))
+(bind-func nvg_draw_loop1
+  (lambda (time:i64 delta_t:double)
+    void
+    ))

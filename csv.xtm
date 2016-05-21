@@ -75,15 +75,6 @@
               (set! i (length ordinals))))))
       returner)))
 
-(bind-func add_to_end:[List{!a}*,List{!a}*,!a]*
-  (lambda (lst value)
-    (if (= (length lst) 0)
-        (cons_h value lst)
-        (let ((pre_cell (nth_tail lst (- (length lst) 1)))
-              (new_cell (cons_h value (cdr pre_cell))))
-          (tset! pre_cell 1 new_cell)
-          lst))))
-
 (bind-func axis_update_ordinal:[double,Axis*,String*]*
   (lambda (axis:Axis* value:String*)
       (let ((ordinals (tuple-ref axis 4))
@@ -91,41 +82,55 @@
           (if (null? returner)
             (let ((new_ordinal_number:double (convert (+ 1 (length ordinals))))
                   (new_ordinal (Ordinal_h value new_ordinal_number)))
-              (set! ordinals (add_to_end ordinals new_ordinal))
+              ;(set! ordinals (add_to_end ordinals new_ordinal))
+              (set! ordinals (List_h new_ordinal ordinals))
               (tuple-set! axis 4 ordinals)
               (tuple-set! axis 2 #t)
               (set! returner new_ordinal)))
           (tuple-ref returner 1))))
 
 ;; TODO
-(bind-func ordinalize_strings:[List{double}*,Axis**,List{String*}*]*
-  (lambda (axes strs)
-    (let ((rets:List{double}* null)
-          (i 0)
-          (new_value 0.0))
-        (dotimes (i (length strs))
-          (let ((str (nth strs i))
-                (axis (pref axes i)))
-            (if (isnumber str)
-              (set! new_value (string_to_double str))
-              (set! new_value (axis_update_ordinal axis str)))
-            (set! axis (adjust_axis_range axis new_value))
-            (set! rets (add_to_end rets new_value))))
-        rets)))
+;(bind-func ordinalize_strings:[List{double}*,Axis**,List{String*}*]*
+;  (lambda (axes strs)
+;    (let ((rets:List{double}* null)
+;          (i 0)
+;          (new_value 0.0))
+;        (dotimes (i (length strs))
+;          (let ((str (nth strs i))
+;                (axis (pref axes i)))
+;            (if (isnumber str)
+;;              (set! new_value (string_to_double str))
+;              (set! new_value (axis_update_ordinal axis str)))
+;            (set! axis (adjust_axis_range axis new_value))
+;            (set! rets (add_to_end rets new_value))))
+;        rets)))
 
 
 
 
 (bind-func update_data
-  (lambda (data:Data* str:String* row:i64)
-    (let ((ls (regex_split "," str))
-          (ls2 (ordinalize_strings (tref data 2) ls))
+  (lambda (data:Data* line:String* row:i64)
+    (let ((ls (regex_split "," line))
+          ;(ls2 (ordinalize_strings (tref data 2) ls))
           (vecs (tref data 0))
           (n (tref data 1))
+          (axes (tref data 2))
           (d (tref data 3))
+          (new_value 0.0)
+          (axis:Axis* null)
+          (str:String* null)
           (i:i64 0))
-      (dotimes (i (tref data 3))
-        (pset! vecs (+ (* row d) i) (nth ls2 i)))
+      (dotimes (i d)
+
+        (set! str (nth ls i))
+        (set! axis (pref axes i))
+        (if (isnumber str)
+          (set! new_value (string_to_double str))
+          (set! new_value (axis_update_ordinal axis str)))
+        (set! axis (adjust_axis_range axis new_value))
+        ;(set! rets (add_to_end rets new_value))))
+
+        (pset! vecs (+ (* row d) i) new_value))
     )))
 
 
@@ -138,7 +143,6 @@
           (n:i64 0)
           (d:i64 0)
           (data:Data* (halloc))
-          (axes:Axis* null)
           (loop-count
             (lambda ()
                (let ((next (Str (yfs_read_line file))))
@@ -170,13 +174,13 @@
         (set! n (- n 1))
         ;;(printf "n: %i\n" n)
         (yfs_file_rewind file)
+        (println "4")
         (set! count 0)
 
         (tset! data 0 (halloc (* n d) ))
         (tset! data 1 n)
         (tset! data 3 d)
         (tset! data 2 (halloc d))
-
         (let ((vetors:double* (tref data 0)))
 
           ;; Restart, now knowing how many vectors
@@ -185,6 +189,7 @@
               (set! count (+ 0 count)))
           (loop-populate)
         )
+
 
         ;;(printf "\rLoaded %s    \n" filename)
         (yfs_close file)
@@ -197,7 +202,7 @@
 
 (bind-func test
   (lambda ()
-    (let ((data (load_csv "iris.csv"))
+    (let ((data (load_csv "bank-data.csv"))
           (axes (tref data 2))
           (vecs (tref data 0))
           (d (tref data 3))
@@ -214,7 +219,7 @@
 
           )))
 
-;;(test)
+;(test)
 
 
 ;(bind-func test1
