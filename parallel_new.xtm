@@ -132,7 +132,7 @@
                   )
                 )
                 )
-          (dv_draw_line vg bounds current_line (- (* d 2) 1) (nth colours (pref clusters i)))
+          (dv_draw_line_curve vg bounds current_line d (nth colours (pref clusters i)))
           #t
           )
         ;;(free current_line)
@@ -247,7 +247,7 @@
     (set! data (load_csv name))
     ))
 
-($ (setData "cars.csv"))
+($ (setData "basic2000.csv"))
 
 (bind-func nvg_draw_loop1
   (lambda (time:i64 delta_t:double)

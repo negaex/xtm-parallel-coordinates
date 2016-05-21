@@ -226,6 +226,62 @@
             (nvgStroke vg)
             0)))))
 
+
+
+
+(bind-func dv_draw_line_curve
+  "draw a 2D line plot
+
+@param vg - nanovg context pointer
+@param bounds - bounding rect in which to draw the line
+@param line - pointer to line data (packed) e.g. x1,y1,x2,y2,...
+@param npoints - number of points in the line"
+  (let ((stroke_width 1.0)
+        (padding 20.)
+        (colour_default (NVGcolor .6 .1 .7 1.0)))
+    (lambda (vg bounds:Rect* line:float* npoints:i64 colour:NVGcolor*)
+      (if (null? colour) (set! colour colour_default))
+      (if (< npoints 2)
+          (begin (println "npoints must be greater than 1 for line") -1)
+          (let ((x (+ (tref bounds 0) padding))
+                (y (+ (tref bounds 1) padding))
+                (w (- (tref bounds 2) (* 2. padding)))
+                (h (- (tref bounds 3) (* 2. padding)))
+                (lastx:float 0.0)
+                (lasty:float 0.0)
+                (ctrly:float 0.0)
+                (i 0))
+            (nvgStrokeWidth vg stroke_width)
+            (_nvgStrokeColor vg colour)
+            ;; (nvgStrokeWidth vg 2.)
+            (nvgBeginPath vg)
+            ;; add first point
+            (nvgMoveTo vg
+                       (+ x (* w (pref line 0)))
+                       (+ y (* h (- 1. (pref line 1)))))
+            (set! lastx (pref line 0))
+            (set! lasty (pref line 1))
+            ;; add rest of the points
+            (dotimes (i 1 (- npoints 1))
+              (set! ctrly (- (* 2.0 (pref line (- (* i 4) 1))) (/ (+ lasty (pref line (+ (* i 4) 1))) 2.0)))
+              (nvgQuadTo vg
+                (+ x (* w (pref line (- (* i 4) 2))))
+                (+ y (* h (- 1. ctrly)))
+                ;(+ x (* w (pref line (- (* i 4) 2))))
+                ;(+ y (* h (- 1. (pref line (- (* i 4) 1)))))
+                         ;(- (+ x (* w (pref line (* i 4)))) 100.0)
+                         ;(- (+ y (* h (- 1. (pref line (+ (* i 4) 1))))) 00.0)
+                         (+ x (* w (pref line (* i 4))))
+                         (+ y (* h (- 1. (pref line (+ (* i 4) 1)))))
+                         )
+                    (set! lastx (pref line (* i 4)))
+                    (set! lasty (pref line (+ (* i 4) 1)))
+                         )
+            (nvgStroke vg)
+            0)))))
+
+
+
 (bind-func dv_draw_line_segments
   "draw a 2D line segment plot
 
