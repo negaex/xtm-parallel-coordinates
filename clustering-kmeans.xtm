@@ -4,7 +4,7 @@
 
 (bind-alias Centroids double*)
 (bind-alias Clusters i64*)
-(bind-type BothCC <Clusters,Centroids>)
+(bind-type BothCCR <Clusters,Centroids,Range**>)
 
 ;; This must exist already
 (bind-func square:[!a,!a]*
@@ -92,7 +92,28 @@
     sum)
     ))
 
-(bind-func cluster-kmeans:[BothCC*,Data*,i64]*
+(bind-func update_ranges
+  (lambda (ranges:Range** data:Data* clusters:Clusters)
+    (let ((i:i64 0)
+          (j:i64 0)
+          (vecs (tref data 0))
+          (n (tref data 1))
+          (d (tref data 3))
+          (cluster:i64 0)
+          (crange:Range* null)
+          )
+      (dotimes (i n)
+        (dotimes (j d)
+          (set! cluster (pref clusters i))
+          (set! crange (pref ranges (+ (* cluster d) j)))
+          (tset! crange 0 (max (tref crange 0) (pref vecs (+ (* i d) j))))
+        )
+      )
+      )
+      ranges
+    ))
+
+(bind-func cluster-kmeans:[BothCCR*,Data*,i64]*
   (lambda (data k)
     (let ((vectors (tuple-ref data 0))
           (n (tuple-ref data 1))
@@ -100,9 +121,11 @@
           (d (tuple-ref data 3))
           (clusters:Clusters (halloc n))
           (centroids:Centroids (halloc (* d k)))
+          (ranges:Range** (halloc (* d k)))
           (i:i64 0)
           (j:i64 0)
-          (both:BothCC* (BothCC clusters centroids)))
+          ;(both:BothCC* (BothCC clusters centroids))
+          )
       ;; Pick k random centroids
       ;(println "\nClustering...")
       ;(printf "0\n")
@@ -113,6 +136,7 @@
               )
           ;(printf "Randomly picked %i with sample: %f\n" index (pref vectors (* d index)))
           (dotimes (j d)
+            (pset! ranges (+ (* d i) j) (Range 10000000.0 (-10000000.0)))
             (pset! centroids (+ (* d i) j) (pref vectors (+ (* d index) j)))
             ;(printf "%i: %f\n" (+ (* d i) j) (pref centroids (+ (* d i) j)))
             )
@@ -130,8 +154,10 @@
           )
         (set! centroids (new_centroids centroids clusters data k))
       )
+
+      (set! ranges (update_ranges ranges data clusters))
       ;(printf "1\n")
-      (BothCC_h clusters centroids)
+      (BothCCR_h clusters centroids ranges)
     )))
 
 
