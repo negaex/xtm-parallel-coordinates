@@ -6,7 +6,7 @@ with open('dataset.csv', 'rb') as f:
   for row in reader:
     if(row[0]!=""):
       previous=row[0]
-    if row[0]=="Country" or (row[1]=="2010" and ((row[2]=="15" and row[3]=="+") or (row[2]=="70" and row[3]=="74" and False))):
+    if row[0]=="Country" or (row[1]=="1995" and ((row[2]=="15" and row[3]=="+") or (row[2]=="70" and row[3]=="74" and False))):
       st = ""
       i=0
       for cell in row:
