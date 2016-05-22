@@ -8,7 +8,7 @@
 
 (sys:load "libs/external/apr.xtm" 'quiet)
 (sys:load "ybot.xtm")
-(sys:load "libs/core/math_ext.xtm")
+;(sys:load "libs/core/math_ext.xtm")
 (sys:load "libs/core/adt.xtm")
 
 (bind-alias Label String*)
@@ -69,7 +69,7 @@
         (returner null))
       (dotimes (i (length ordinals))
         (let ((ordinal (nth ordinals i)))
-          (if (= (length (tuple-ref ordinal 0)) (length value))
+          (if (equal (tuple-ref ordinal 0) value)
             (let ((j 0))
               (set! returner ordinal)
               (set! i (length ordinals))))))
