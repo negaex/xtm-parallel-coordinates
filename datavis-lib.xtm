@@ -26,14 +26,20 @@
 (bind-func dv_draw_axis_2D
   "draw 2D axes
 
+  (bind-type Axis <Label,Offset,IsOrdinal,Range*,List{Ordinal*}*>)
+
 @param vg - nanovg context pointer
 @param bounds - bounding rect in which to draw the axis labels
 @param y_off  - horizontal offset for axis, in range [0, 1]"
   (let ((stroke_width 2.)
         (padding 20.)
-        (colour (NVGcolor 1. 1. 1. 1.)))
-    (lambda (vg bounds:Rect* y_off:float)
-      (let ((x (+ (tref bounds 0) padding))
+        (colour (NVGcolor 1. 1. 1. .7))
+        (font_size 15.0)
+        (textwidth 0.0))
+    (lambda (vg bounds:Rect* axis:Axis*)
+      (let ((y_off (tref axis 1))
+            (title (cstring (tref axis 0)))
+            (x (+ (tref bounds 0) padding))
             (y (+ (tref bounds 1) padding))
             (w (- (tref bounds 2) (* 2. padding)))
             (h (- (tref bounds 3) (* 2. padding))))
@@ -45,6 +51,19 @@
         ;; bottom
         (nvgLineTo vg (+ x (* y_off w)) (+ y h))
         (nvgStroke vg)
+
+
+        (nvgFontSize vg font_size)
+        (set! textwidth (nvgTextBounds vg 0. 0. title null null))
+        (_nvgFillColor vg colour)
+        (nvgBeginPath vg)
+        (nvgText vg
+                 (- (+ x (* y_off w)) (* 0.5 textwidth))
+                 (+ y h font_size)
+                 title
+                 null)
+        (nvgFill vg)
+
         0))))
 
 (bind-func dv_draw_axes_2D
@@ -263,14 +282,14 @@
             (set! lasty (pref line 1))
             ;; add rest of the points
             (dotimes (i 1 (- npoints 1))
-              (set! ctrly (- (* 2.0 (pref line (- (* i 4) 1))) (/ (+ lasty (pref line (+ (* i 4) 1))) 2.0)))
+              ;(println (pref line (- (* i 4) 1)))
+              (if (= (pref line (- (* i 4) 1)) 0.0)
+                (set! ctrly (* 0.5 (+ lasty (pref line (+ (* i 4) 1))) ))
+                (set! ctrly (- (* 2.0 (pref line (- (* i 4) 1))) (/ (+ lasty (pref line (+ (* i 4) 1))) 2.0)))
+              )
               (nvgQuadTo vg
-                (+ x (* w (pref line (- (* i 4) 2))))
-                (+ y (* h (- 1. ctrly)))
-                ;(+ x (* w (pref line (- (* i 4) 2))))
-                ;(+ y (* h (- 1. (pref line (- (* i 4) 1)))))
-                         ;(- (+ x (* w (pref line (* i 4)))) 100.0)
-                         ;(- (+ y (* h (- 1. (pref line (+ (* i 4) 1))))) 00.0)
+                         (+ x (* w (pref line (- (* i 4) 2)) ))
+                         (+ y (* h (- 1. ctrly)))
                          (+ x (* w (pref line (* i 4))))
                          (+ y (* h (- 1. (pref line (+ (* i 4) 1)))))
                          )
