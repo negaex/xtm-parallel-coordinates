@@ -181,8 +181,8 @@
 @param bounds - bounding rect in which to draw the title (centre-top)
 @param title"
   (let ((padding 20.)
-        (font_size 40.)
-        (colour (NVGcolor 1. 1. 1. 1.)))
+        (font_size 30.)
+        (colour (NVGcolor 1. 1. 1. .6)))
     (lambda (vg bounds:Rect* title:i8*)
       (let ((x (+ (tref bounds 0) padding))
             (y (+ (tref bounds 1) padding))
@@ -194,7 +194,7 @@
         (_nvgFillColor vg colour)
         (nvgBeginPath vg)
         (nvgText vg
-                 (+ x (* (- w textwidth) .5))
+                 x
                  y
                  title
                  null)
