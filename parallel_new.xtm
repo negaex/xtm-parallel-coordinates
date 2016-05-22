@@ -103,15 +103,15 @@
 
 ;($ (println (tref (pref global-range1 55) 0)))
 
-(bind-val alpha1 float 0.4)
+(bind-val alpha float 1.0)
 (bind-val colors NVGcolor** 4)
 (bind-func set-colors
   (lambda ()
     ;(set! colors (halloc 4))
-    (pset! colors 0 (NVGcolor .6 .1 .7 alpha1))
-    (pset! colors 1 (NVGcolor .1 .7 .6 alpha1))
-    (pset! colors 2 (NVGcolor .7 .6 .1 alpha1))
-    (pset! colors 3 (NVGcolor .1 .6 .7 alpha1))
+    (pset! colors 0 (NVGcolor .6 .1 .7 alpha))
+    (pset! colors 1 (NVGcolor .1 .7 .6 alpha))
+    (pset! colors 2 (NVGcolor .7 .6 .1 alpha))
+    (pset! colors 3 (NVGcolor .1 .6 .7 alpha))
     ))
 (set-colors)
 (bind-val parallel_rect Rect* (Rect (* 0.0 (convert width)) (* 0.05 (convert height)) (* 1.0 (convert width)) (* 0.9 (convert height))))
@@ -239,13 +239,104 @@
             (set! color (NVGcolor (intermediate (tref color 0) (tref color-goal 0) transition)
                                   (intermediate (tref color 1) (tref color-goal 1) transition)
                                   (intermediate (tref color 2) (tref color-goal 2) transition)
-                                  alpha1))
+                                  alpha))
         ))
         (dv_draw_line_curve vg bounds current_line d color))
         (dotimes (i d)
           (dv_draw_axis_2D vg bounds (pref axes i)))
         #t
     ))))
+
+
+(bind-func sp_transition_data
+  (let (
+        (i:i64 0)
+        (j:i64 0)
+        (k:i64 0)
+        (z:i64 0)
+        (axis1:Axis* null)
+        (axis2:Axis* null)
+        (range1:Range* null)
+        (minv1:double 0.0)
+        (maxv1:double 0.0)
+        (range2:Range* null)
+        (minv2:double 0.0)
+        (maxv2:double 0.0)
+        (current:double 0.0)
+        (current-old:double 0.0)
+        (current-goal:double 0.0)
+        (current1:double 0.0)
+        (current2:double 0.0)
+        (normalized:double 0.0)
+        (normalized2:double 0.0)
+        (spacing:double 0.0)
+        (spacingn:double 0.0)
+        (cluster:i64 0)
+        (cluster-goal:i64 0)
+        (crange:Range* null)
+        (minr:double 0.0)
+        (maxr:double 0.0)
+        (padding 0.1)
+        (vectors:double* null)
+        (axes:Axis** null)
+        (d:i64 0)
+        (n:i64 0)
+        (both:BothCCR* null)
+        (clusters:Clusters null)
+        (clusters-goal:Clusters null)
+        (centroids:Centroids null)
+        (data:Data* null)
+        (data-goal:Data* null)
+        (vectors-goal:double* null)
+        (centroids-goal:Centroids null)
+        (color:NVGcolor* null)
+        (color-goal:NVGcolor* null)
+        )
+    (lambda (bounds:Rect* dataset:Dataset* dataset-goal:Dataset* d1:i64 d2:i64 transition:double tr1:bool tr2:bool tr3:bool tr4:bool)
+      (set! data (tref dataset 0))
+      (set! data-goal (tref dataset-goal 0))
+      (set! clusters (tuple-ref dataset 1))
+      (set! centroids (tuple-ref dataset 2))
+      (set! vectors (tuple-ref data 0))
+      (set! vectors-goal (tuple-ref data-goal 0))
+      (set! clusters-goal (tuple-ref dataset-goal 1))
+      (set! centroids-goal (tuple-ref dataset-goal 2))
+      (set! axes (tuple-ref data 2))
+      (set! n (tuple-ref data 1))
+      (set! d (tuple-ref data 3))
+      (let ((current_line:float* (halloc (* n 2))))
+      (set! axis1 (pref axes d1))
+      (set! range1 (pref global-range d1))
+      (set! minv1 (tuple-ref range1 0))
+      (set! maxv1 (tuple-ref range1 1))
+      (set! axis2 (pref axes d2))
+      (set! range2 (pref global-range d2))
+      (set! minv2 (tuple-ref range2 0))
+      (set! maxv2 (tuple-ref range2 1))
+
+      (dotimes (i n)
+        (set! cluster (pref clusters i))
+        (set! cluster-goal (pref clusters-goal i))
+        (set! current1 (pref vectors (+ d1 (* i d))))
+        (set! current2 (pref vectors (+ d2 (* i d))))
+        (set! normalized  (+ padding (* (- 1.0 (* 2.0 padding)) (/ (- current1 minv1) (- maxv1 minv1)))))
+        (set! normalized2 (+ padding (* (- 1.0 (* 2.0 padding)) (/ (- current2 minv2) (- maxv2 minv2)))))
+        (set! color (pref colors cluster))
+        (dv_draw_scatter_point vg bounds (convert normalized2) (convert normalized) color)
+        )
+      (dv_draw_axes_2D vg bounds)
+      (dv_draw_axis_labels_2D vg bounds axis1 axis2)
+        ;(dv_draw_scatter_points vg bounds current_line n 2.0)
+      #t
+    ))))
+
+
+
+
+
+
+
+
 
 
 
@@ -282,10 +373,10 @@
         (i 0))
     (lambda (bounds:Rect*)
       (dotimes (i npoints)
-        (pset! points (* i 2) (+ (* (cos (* .00000064 (convert (* i 2 (now))))) .5) .5))
+        (pset! points (* i 2) (+ (* (cos (* .064 (convert (+ i 2 i)))) .5) .5))
         ;; (pset! points (+ 1 (* i 2)) (/ (convert i) (convert npoints)))
-        (pset! points (+ 1 (* i 2)) (+ .5 (% (* 3.2 (cos (* 0.0000003 (convert (* (now) i) float)))) .5))))
-      (dv_draw_scatter_points vg bounds points npoints (+ (* (cos (* .0000053 (convert (now)))) 3.) 5.))
+        (pset! points (+ 1 (* i 2)) (+ .5 (% (* 3.2 (cos (* 0.03 (convert (+ i i) float)))) .5))))
+      (dv_draw_scatter_points vg bounds points npoints 4.0)
       ;; (dv_draw_axis_labels_2D vg bounds points npoints points npoints)
       (dv_draw_axes_2D vg bounds)
       (dv_draw_title vg bounds "Scatterplot")
@@ -313,6 +404,20 @@
   (dv_draw_title vg parallel_rect title)
     ))
 
+
+(bind-func nvg_scatter_loop
+    (lambda (time:i64 delta_t:double dataset:Dataset* label:i8*)
+      (pre_loop)
+      (draw_title label)
+      ;(draw_scatterplot parallel_rect dataset)
+      (sp_transition_data parallel_rect dataset dataset 0 1 0.0 #f #f #f #f)
+
+      ;(pc_transition_data parallel_rect dataset dataset-goal transition tr1 tr2 tr3 tr4)
+      (post_loop)
+      (let ((next_time (+ time (convert (* 44100. delta_t)))))
+        (callback next_time nvg_scatter_loop next_time delta_t dataset label)
+      )))
+
 (bind-func nvg_transition_loop
     (lambda (time:i64 delta_t:double until:i64 dataset:Dataset* dataset-goal:Dataset* transition:double increment:double tr1:bool tr2:bool tr3:bool tr4:bool label:i8*)
       (pre_loop)
@@ -339,9 +444,10 @@
     (printf "Running ")
     (set-data (list "csv/school1995.csv" "csv/school2000.csv"
                        "csv/school2005.csv" "csv/school2010.csv"))
-    (let ((last when)
+    (let ( (label "Test 1")
+
+          (last when)
           (step (/ 1. 20.))
-          (label "Test 1")
           (i:i64 0))
       (printf "%s\n" label)
       (dotimes (i (- data-count 1))
@@ -360,9 +466,24 @@
           last2
         ))))
 
+(bind-func test_no2
+  (lambda (when)
+    (printf "Running ")
+    (set-data (list "csv/school1995.csv" "csv/school2000.csv"
+                       "csv/school2005.csv" "csv/school2010.csv"))
+    (let ( (label "Test 2")
+
+          (last:i64 when)
+          (step (/ 1. 20.))
+          (i:i64 0))
+      (printf "%s\n" label)
+      (nvg_scatter_loop (now) step (pref all_datasets 0) label)
+      0
+        )))
+
 (bind-func main
   (lambda ()
-    (let ((t1 (test_no1 (now))))
+    (let ((t1 (test_no2 (now))))
       #t
     )))
 
