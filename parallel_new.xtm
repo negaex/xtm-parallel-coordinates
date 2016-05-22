@@ -65,7 +65,7 @@
     ;(set! colors (halloc 4))
     (pset! colors 0 (NVGcolor .6 .1 .7 alpha1))
     (pset! colors 1 (NVGcolor .1 .7 .6 alpha1))
-    (pset! colors 2 (NVGcolor .1 .7 .6 alpha1))
+    (pset! colors 2 (NVGcolor .7 .6 .1 alpha1))
     (pset! colors 3 (NVGcolor .1 .6 .7 alpha1))
     ))
 (set-colors)
@@ -240,6 +240,11 @@
       ))
 
 
+(bind-func draw_title
+  (lambda (title:i8*)
+  (dv_draw_title vg parallel_rect title)
+    ))
+
 (bind-func run_loop
   (lambda ()
 
@@ -250,6 +255,7 @@
           (t4 (+ t3 (* 44100 4))))
 
       (println "running loop...")
+      (draw_title "2000")
       (nvg_draw_loop t1 (/ 1. 5.) t2 data00)
       (callback t2 nvg_draw_loop t2 (/ 1. 5.) t3 data05)
       (callback t3 nvg_draw_loop t3 (/ 1. 5.) t4 data10)
@@ -264,16 +270,9 @@
 
 (run_loop)
 
-(bind-func setData
-  (lambda (name)
-    (set! data (load_csv name))
-    ))
-
-($ (setData "basic.csv"))
-
-($ (set! data10 (load_csv "csv/school2010.csv")))
-
+"
 (bind-func nvg_draw_loop
   (lambda (time:i64 delta_t:double)
     void
     ))
+"
