@@ -174,14 +174,51 @@
         (nvgFill vg)
         0))))
 
+
+(bind-func dv_draw_axis_labels_2D
+  "draw 2D axis labels
+
+@param vg - nanovg context pointer
+@param bounds - bounding rect in which to draw the axis labels"
+  (let ((padding 20.)
+        (font_size 13.)
+        (str:i8* (zalloc 256)))
+    (lambda (vg bounds:Rect* x-axis:Axis* y-axis:Axis*)
+      (let ((x (+ (tref bounds 0) padding))
+            (y (+ (tref bounds 1) padding))
+            (w (- (tref bounds 2) (* 2. padding)))
+            (h (- (tref bounds 3) (* 2. padding)))
+            (str:i8* (salloc 256))
+            (i 0)
+            (x-range:Range* (tref x-axis 3))
+            (x-min (tref x-range 0))
+            (x-max (tref x-range 1))
+            (decimal_format_string "%.2f"))
+        (nvgFontSize vg font_size)
+        (_nvgFillColor vg (NVGcolor .7 .7 .7 1.))
+        (nvgBeginPath vg)
+        ;; x labels
+        (dotimes (i 10)
+          ;(println i)
+          (sprintf str
+                   decimal_format_string
+                   (convert (+ (* (- 1.0 (/ (convert i) 10.0)) x-min) (* (/ (convert i) 10.0) x-max) ) double))
+          (nvgText vg
+                   (+ x (* 0.1 w) (* 0.8 (convert i) (/ w (convert (- 10 1)))))
+                   (+ y h font_size)
+                   str
+                   null))
+        (nvgFill vg)
+        0))))
+
 (bind-func dv_draw_title
   "draw a title (top-center)
 
 @param vg - nanovg context pointer
 @param bounds - bounding rect in which to draw the title (centre-top)
 @param title"
-  (let ((padding 20.)
-        (font_size 30.)
+  (let ((padding 10.)
+        (font_size 20.)
         (colour (NVGcolor 1. 1. 1. .6)))
     (lambda (vg bounds:Rect* title:i8*)
       (let ((x (+ (tref bounds 0) padding))
@@ -360,6 +397,37 @@ In a segmented line plot, successive x,y pairs are connected to each other.
             (nvgStroke vg)
             0)))))
 
+
+(bind-func dv_draw_scatter_point
+  "draw 2D points for a scatterplot
+
+@param vg - nanovg context pointer
+@param bounds - bounding rect in which to draw the points
+@param points - pointer to point data (packed) e.g. x1,y1,x2,y2,...
+@param npoints - number of points
+@param size - point size"
+  (let ((stroke_width 2.)
+        (padding 20.)
+        )
+    (lambda (vg bounds:Rect* x1:float y1:float colour:NVGcolor*)
+          (let ((x (+ (tref bounds 0) padding))
+                (y (+ (tref bounds 1) padding))
+                (w (- (tref bounds 2) (* 2. padding)))
+                (h (- (tref bounds 3) (* 2. padding)))
+                (i 0))
+            (nvgStrokeWidth vg stroke_width)
+            (_nvgStrokeColor vg colour)
+            (nvgBeginPath vg)
+            ;; add circles to path
+            (nvgCircle vg
+                       (+ x (* w x1))
+                       (+ y (* h (- 1. y1)))
+                       4.0)
+            (nvgStroke vg)
+            0))))
+
+
+
 (bind-func dv_draw_scatter_points
   "draw 2D points for a scatterplot
 
@@ -390,6 +458,7 @@ In a segmented line plot, successive x,y pairs are connected to each other.
                          size))
             (nvgStroke vg)
             0)))))
+
 
 (bind-func dv_draw_scatter_points
   "draw 2D points for a scatterplot
