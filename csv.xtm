@@ -174,7 +174,6 @@
         (set! n (- n 1))
         ;;(printf "n: %i\n" n)
         (yfs_file_rewind file)
-        (println "4")
         (set! count 0)
 
         (tset! data 0 (halloc (* n d) ))
