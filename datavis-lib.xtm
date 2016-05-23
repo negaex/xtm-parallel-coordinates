@@ -217,7 +217,7 @@
                     decimal_format_string
                     (convert (+ (* (- 1.0 (/ (convert i) 10.0)) y-min) (* (/ (convert i) 10.0) y-max) ) double))
            (nvgText vg
-                    (- x (* 4. font_size))
+                    (- x (* 3. font_size))
                     (- (+ y h)
                        (* 0.1 h) (* 0.8 (convert i) (/ h (convert (- 10 1)))))
                     str
@@ -370,6 +370,49 @@
                          )
                     (set! lastx (pref line (* i 4)))
                     (set! lasty (pref line (+ (* i 4) 1)))
+                         )
+            (nvgStroke vg)
+            0)))))
+
+
+
+(bind-func dv_draw_line_curve_no_centroids
+  "draw a 2D line plot
+
+@param vg - nanovg context pointer
+@param bounds - bounding rect in which to draw the line
+@param line - pointer to line data (packed) e.g. x1,y1,x2,y2,...
+@param npoints - number of points in the line"
+  (let ((stroke_width 1.0)
+        (padding 20.)
+        (colour_default (NVGcolor .6 .1 .7 1.0)))
+    (lambda (vg bounds:Rect* line:float* npoints:i64 colour:NVGcolor*)
+      (if (null? colour) (set! colour colour_default))
+      (if (< npoints 2)
+          (begin (println "npoints must be greater than 1 for line") -1)
+          (let ((x (+ (tref bounds 0) padding))
+                (y (+ (tref bounds 1) padding))
+                (w (- (tref bounds 2) (* 2. padding)))
+                (h (- (tref bounds 3) (* 2. padding)))
+                (lastx:float 0.0)
+                (lasty:float 0.0)
+                (ctrly:float 0.0)
+                (i 0))
+            (nvgStrokeWidth vg stroke_width)
+            (_nvgStrokeColor vg colour)
+            ;; (nvgStrokeWidth vg 2.)
+            (nvgBeginPath vg)
+            ;; add first point
+            (nvgMoveTo vg
+                       (+ x (* w (pref line 0)))
+                       (+ y (* h (- 1. (pref line 1)))))
+            ;; add rest of the points
+            (dotimes (i 1 (- npoints 1))
+              ;(println (pref line (- (* i 4) 1)))
+              (nvgLineTo vg
+                         (+ x (* w (pref line (* i 2))))
+                         (+ y (* h (- 1. (pref line (+ (* i 2) 1)))))
+                         )
                          )
             (nvgStroke vg)
             0)))))

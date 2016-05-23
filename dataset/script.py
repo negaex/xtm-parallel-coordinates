@@ -6,13 +6,13 @@ with open('dataset.csv', 'rb') as f:
   for row in reader:
     if(row[0]!=""):
       previous=row[0]
-    if row[0]=="Country" or (row[1]=="1995" and ((row[2]=="15" and row[3]=="+") or (row[2]=="70" and row[3]=="74" and False))):
+    if row[0]=="Country" or (row[1]=="1995" and ((row[2]=="15" and row[3]=="+" and False) or (row[2]=="15" and row[3]=="+"))):
       st = ""
       i=0
       for cell in row:
         if(cell==""):
           cell=previous
-        if(i in [0,6,8,10,16]):
+        if(i in [6,8]):
           cell = cell[0:]
           cell = cell.replace(",","")
           st+= ("%s," % cell)
