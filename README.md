@@ -7,3 +7,10 @@ Todo: transitions between two states
 Example of clustering:
 
 ![Current state preview](img/preview.png)
+
+Transitions:
+
+![Scatter](img/scatter.gif)
+
+  
+![Parallel Cordinates](img/parallel.gif)
