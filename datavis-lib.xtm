@@ -183,16 +183,18 @@
   (let ((padding 20.)
         (font_size 13.)
         (str:i8* (zalloc 256)))
-    (lambda (vg bounds:Rect* x-axis:Axis* y-axis:Axis*)
+    (lambda (vg bounds:Rect* y-axis:Axis* x-axis:Axis* y-range:Range* x-range:Range* )
       (let ((x (+ (tref bounds 0) padding))
             (y (+ (tref bounds 1) padding))
             (w (- (tref bounds 2) (* 2. padding)))
             (h (- (tref bounds 3) (* 2. padding)))
             (str:i8* (salloc 256))
             (i 0)
-            (x-range:Range* (tref x-axis 3))
+            ;(x-range:Range* (tref x-axis 3))
             (x-min (tref x-range 0))
             (x-max (tref x-range 1))
+            (y-min (tref y-range 0))
+            (y-max (tref y-range 1))
             (decimal_format_string "%.2f"))
         (nvgFontSize vg font_size)
         (_nvgFillColor vg (NVGcolor .7 .7 .7 1.))
@@ -208,6 +210,19 @@
                    (+ y h font_size)
                    str
                    null))
+
+         (dotimes (i 10)
+           ;(println i)
+           (sprintf str
+                    decimal_format_string
+                    (convert (+ (* (- 1.0 (/ (convert i) 10.0)) y-min) (* (/ (convert i) 10.0) y-max) ) double))
+           (nvgText vg
+                    (- x (* 4. font_size))
+                    (- (+ y h)
+                       (* 0.1 h) (* 0.8 (convert i) (/ h (convert (- 10 1)))))
+                    str
+                    null))
+
         (nvgFill vg)
         0))))
 
