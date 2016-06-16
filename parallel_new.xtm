@@ -91,7 +91,7 @@
 
     (let ((i:i64 1)
           (datasets:Dataset** (halloc data-count))
-          (k:i64 2))
+          (k:i64 3))
     (pset! datasets 0 (load_dataset (nth csv_list 0) k))
       (dotimes (i 1 (- data-count 1))
           (pset! datasets i (load_dataset (nth csv_list i) (tref (pref datasets (- i 1)) 2) k))
@@ -565,7 +565,7 @@
                   )
                   (if (= current2 0.0)
                     (set! spacingn 0.0)
-                    (set! spacingn (* 0.0 (+ padding (* (- 1.0 (* 2.0 padding)) (/ (- (- current current2 ) minv) (- maxv minv))))))
+                    (set! spacingn (* 0.1 (+ padding (* (- 1.0 (* 2.0 padding)) (/ (- (- current current2 ) minv) (- maxv minv))))))
                   )
                   (pset! current_line (+ (* j 4) 2) (convert (/ (+ offset offset2) (convert 2))) )
                   (pset! current_line (+ (* j 4) 3) (convert (+ spacingn normalized)) )
