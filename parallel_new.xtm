@@ -1,7 +1,7 @@
 
 ;;; parallel_coordinates.xtm:merged code and example --
 
-;; Author: ***REMOVED***
+;; Author: noiach
 ;; Keywords: extempore
 ;; Required dylibs: libglfw3, libnanovg
 
